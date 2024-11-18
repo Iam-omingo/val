@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Is it a Proposal? 💖</title>
+    <style>
+        /* Styles for the chat container and message bubbles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fce4ec;
+            color: #e91e63;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            width: 80%;
+            max-width: 600px;
+            height: 80%;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-box {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 20px;
+            padding-right: 10px;
+            height: 100%;
+            position: relative;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .message.user {
+            background-color: #e91e63;
+            color: white;
+            align-self: flex-end;
+            flex-direction: row-reverse;
+            padding-right: 20px;
+        }
+
+        .message.bot {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            padding-left: 20px;
+        }
+
+        .message .bubble {
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            max-width: 75%;
+            position: relative;
+        }
+
+        .message.bot .bubble {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .message.user .bubble {
+            background-color: #e91e63;
+            color: white;
+        }
+
+        /* Animation for message fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Styling for the input container */
+        #input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #user-input {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e91e63;
+            border-radius: 8px;
+            width: 80%;
+            outline: none;
+        }
+
+        #send-btn {
+            background-color: #e91e63;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #send-btn:hover {
+            background-color: #d81b60;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-box" id="chat-box">
+        <!-- Messages will appear here -->
+    </div>
+    <audio id="valentine-audio" src="/static/val.mp3" type="audio/mp3"></audio>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your response here..." />
+        <button id="send-btn" onclick="handleUserInput()">Send</button>
+    </div>
+</div>
+
+<script>
+    let userName = "";
+    let userEmail = "";
+    let waitingForName = true;
+    let waitingForEmail = false;
+    const botName = "Vincent";  // Bot's name
+
+    const introMessage = [
+        { text: "💌 Hey there! 💖 Before we start, whisper your name to me issa secret!", sender: "bot" }
+    ];
+
+    function addMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message", message.sender);
+        
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+        bubble.textContent = message.text;
+
+        const profileContainer = document.createElement("div");
+        profileContainer.classList.add("profile-container", message.sender);
+        
+        // Use first letter of bot's name for profile
+        const profile = document.createElement("div");
+        profile.classList.add("profile");
+        profile.textContent = message.sender === "user" ? userName.charAt(0).toUpperCase() : botName.charAt(0).toUpperCase();
+
+        profileContainer.appendChild(profile);
+        messageElement.appendChild(profileContainer);
+        messageElement.appendChild(bubble);
+
+        document.getElementById("chat-box").appendChild(messageElement);
+        document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
+    }
+
+    function handleUserInput() {
+        const userText = document.getElementById("user-input").value.trim();
+
+        if (waitingForName && userText) {
+            userName = userText;
+            waitingForName = false;
+            addMessage({ text: `Nice to meet you, ${userName}! 💖 .`, sender: "bot" });
+            document.getElementById("user-input").value = "";  // Clear input
+
+            setTimeout(() => {
+                continueConversation();
+            }, 1500);
+        } else if (waitingForEmail && userText) {
+            userEmail = userText;
+            waitingForEmail = false;
+            console.log(`Received email from user: ${userEmail}`); // Debugging the email input
+            addMessage({ text: "Thank you for sharing your email! 🎁💌", sender: "bot" });
+
+            setTimeout(() => {
+                showSendingAnimation();
+                sendFeedbackToBackend(userName, userEmail); // Send the data to the backend
+            }, 1500);
+        } else if (userText) {
+            addMessage({ text: userText, sender: "user" });
+            document.getElementById("user-input").value = "";  // Clear input
+
+            setTimeout(() => {
+                analyzeResponse(userText);
+            }, 1000);
+        }
+    }
+
+    function continueConversation() {
+        addMessage({ text: "Valentine's Day is almost here... and it's the perfect time for me to ask... 🌹", sender: "bot" });
+
+        setTimeout(() => {
+            // Display the "Will you be my Valentine?" message and play the audio
+            addMessage({ text: "Will you... be my Valentine? 💕", sender: "bot" });
+
+            // Automatically play the audio
+            const audio = document.getElementById('valentine-audio');
+            audio.play().catch(error => {
+                console.log('Audio playback failed:', error);
+            });
+
+        }, 1500);
+    }
+
+    function analyzeResponse(response) {
+        let botMessage = "";
+
+        // Define different variations of saying "yes"
+        const positiveResponses = ["yes", "yees", "yes please", "sure", "definitely", "absolutely", "of course", "yep", "yep yep", "yessir"];
+
+        if (positiveResponses.includes(response.toLowerCase())) {
+            botMessage = `Yay, ${userName}! 🥳 I'm so happy you said yes! Let's make this Valentine's Day unforgettable. 💫`;
+        } else if (response.toLowerCase() === "no") {
+            botMessage = `Oh no, ${userName}! I'm heartbroken, but it's okay. Maybe next time. Wishing you a wonderful Valentine's Day ahead. 😊❤️`;
+        } else {
+            botMessage = "Hmm... I didn't quite get that. 🤔 Could you please try again?";
+        }
+
+        addMessage({ text: botMessage, sender: "bot" });
+
+        setTimeout(() => {
+            askForEmail();
+        }, 1500);
+    }
+
+    function askForEmail() {
+        addMessage({ text: "Before I go, would you mind sharing your email? Vincent has a surprise for you! 🎁💖", sender: "bot" });
+        waitingForEmail = true;
+    }
+
+    function showSendingAnimation() {
+        addMessage({ text: "Sending your surprise... 💌", sender: "bot" });
+
+        const sendingElement = document.createElement("div");
+        sendingElement.classList.add("message", "bot");
+
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+        bubble.innerHTML = '<div class="sending-icon"></div><div class="sending-text">Check your inbox for the surprise! ✨</div>';
+        
+        sendingElement.appendChild(bubble);
+        document.getElementById("chat-box").appendChild(sendingElement);
+
+        document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
+
+        // Redirect to the sending page after the animation
+        setTimeout(() => {
+            window.location.href = "/sending-surprise";
+        }, 3000);
+    }
+
+    function sendFeedbackToBackend(userName, userEmail) {
+        const feedbackData = {
+            user_name: userName,
+            user_email: userEmail,
+            response: "yes" // Assuming user said yes for simplicity in this case
+        };
+
+        fetch('/submit_feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(feedbackData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Feedback sent successfully:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    window.onload = () => {
+        introMessage.forEach(message => addMessage(message));  // Show the first bot message
+    };
+
+    document.getElementById("user-input").addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+            handleUserInput();
+        }
+    });
+</script>
+
+</body>
+</html>
